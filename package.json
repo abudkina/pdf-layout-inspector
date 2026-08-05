@@ -1,0 +1,36 @@
+{
+  "name": "pdf-layout-inspector",
+  "version": "1.0.0",
+  "description": "Инструмент для проверки вёрстки PDF: текстовые блоки, изображения и точные метрики шрифтов",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:all": "vitest run && playwright test",
+    "lint": "tsc --noEmit",
+    "screenshots": "node scripts/capture-screenshots.mjs && node scripts/make-demo-gif.mjs"
+  },
+  "keywords": [
+    "pdf",
+    "layout",
+    "inspector",
+    "typography",
+    "design"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.49.1",
+    "@types/node": "^22.10.2",
+    "jsdom": "^25.0.1",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.6",
+    "vitest": "^2.1.8"
+  },
+  "dependencies": {
+    "pdfjs-dist": "^4.9.155"
+  }
+}

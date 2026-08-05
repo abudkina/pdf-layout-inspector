@@ -1,0 +1,22 @@
+# Зависимости
+node_modules/
+dist/
+coverage/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+# Система
+.DS_Store
+Thumbs.db
+*.log
+.vscode/
+.idea/
+
+# Временные
+*.tmp
+*.local
+.env
+.env.*
+docs/screenshots/frames/
