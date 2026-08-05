@@ -1,5 +1,9 @@
 import type { PDFDocumentProxy } from 'pdfjs-dist';
-import type { НастройкиПриложения, РазметкаДокумента } from '../types';
+import type {
+  НастройкиПриложения,
+  РазметкаДокумента,
+  СтраницаПриложения,
+} from '../types';
 import {
   экспортироватьКартуБлоков,
   имяФайлаЭкспорта,
@@ -10,6 +14,7 @@ import { ЗонаЗагрузки } from '../components/UploadZone';
 import { ПанельИнструментов } from '../components/Toolbar';
 import { ПросмотрщикСтраницы } from '../components/PageViewer';
 import { Уведомления } from '../components/Toast';
+import { СтраницаМультиФайл } from '../components/MultiFilePage';
 
 /**
  * Корневое приложение PDF Layout Inspector.
@@ -21,8 +26,11 @@ export class Приложение {
   private зонаЗагрузки: ЗонаЗагрузки;
   private панель: ПанельИнструментов;
   private просмотрщик: ПросмотрщикСтраницы;
+  private мульти: СтраницаМультиФайл;
   private индикатор!: HTMLElement;
   private статистика!: HTMLElement;
+  private навигация!: HTMLElement;
+  private разделИнспектор!: HTMLElement;
 
   private документ: PDFDocumentProxy | null = null;
   private разметка: РазметкаДокумента | null = null;
@@ -50,6 +58,7 @@ export class Приложение {
           if (this.занят) return;
           void this.показатьСтраницу(n);
         },
+        наЛинейку: (v) => this.обновитьНастройку({ линейкаВключена: v }),
         наЭкспорт: () => void this.экспорт(),
         наСброс: () => this.сброс(),
       },
@@ -57,8 +66,20 @@ export class Приложение {
     );
 
     this.просмотрщик = new ПросмотрщикСтраницы(this.настройки);
+    this.мульти = new СтраницаМультиФайл(
+      {
+        наОшибку: (т) => this.уведомления.ошибка(т),
+        наУспех: (т) => this.уведомления.успех(т),
+        наПрозрачностьСлоя: (v) =>
+          this.обновитьНастройку({ прозрачностьСлояКартинки: v }),
+        наЛинейку: (v) => this.обновитьНастройку({ линейкаВключена: v }),
+      },
+      this.настройки,
+    );
+
     this.собратьРазметку();
     this.панель.установитьАктивность(false);
+    this.переключитьСтраницу(this.настройки.страница);
   }
 
   private собратьРазметку(): void {
@@ -68,14 +89,31 @@ export class Приложение {
     const шапка = document.createElement('header');
     шапка.className = 'шапка';
     шапка.innerHTML = `
-      <div class="шапка__бренд">
-        <img src="/favicon.svg" alt="" width="36" height="36" class="шапка__лого" />
-        <div>
-          <h1 class="шапка__название">PDF Layout Inspector</h1>
-          <p class="шапка__слоган">Проверка вёрстки: текст, изображения, шрифты</p>
+      <div class="шапка__ряд">
+        <div class="шапка__бренд">
+          <img src="/favicon.svg" alt="" width="36" height="36" class="шапка__лого" />
+          <div>
+            <h1 class="шапка__название">PDF Layout Inspector</h1>
+            <p class="шапка__слоган">Проверка вёрстки: текст, изображения, шрифты</p>
+          </div>
         </div>
+        <nav class="шапка__навигация" aria-label="Разделы приложения">
+          <button type="button" class="шапка__вкладка" data-страница="инспектор" aria-label="Раздел Инспектор">
+            Инспектор
+          </button>
+          <button type="button" class="шапка__вкладка" data-страница="мульти" aria-label="Раздел Мульти-файл">
+            Мульти-файл
+          </button>
+        </nav>
       </div>
     `;
+    this.навигация = шапка.querySelector('.шапка__навигация')!;
+    this.навигация.querySelectorAll('.шапка__вкладка').forEach((кнопка) => {
+      кнопка.addEventListener('click', () => {
+        const стр = (кнопка as HTMLElement).dataset.страница as СтраницаПриложения;
+        this.переключитьСтраницу(стр);
+      });
+    });
 
     this.индикатор = document.createElement('div');
     this.индикатор.className = 'индикатор';
@@ -91,15 +129,19 @@ export class Приложение {
     this.статистика.className = 'статистика';
     this.статистика.hidden = true;
 
-    const основная = document.createElement('main');
-    основная.className = 'основная';
-    основная.append(
+    this.разделИнспектор = document.createElement('div');
+    this.разделИнспектор.className = 'раздел-инспектор';
+    this.разделИнспектор.append(
       this.зонаЗагрузки.корень,
       this.панель.корень,
       this.индикатор,
       this.статистика,
       this.просмотрщик.корень,
     );
+
+    const основная = document.createElement('main');
+    основная.className = 'основная';
+    основная.append(this.разделИнспектор, this.мульти.корень);
 
     const подвал = document.createElement('footer');
     подвал.className = 'подвал';
@@ -112,10 +154,28 @@ export class Приложение {
     this.просмотрщик.корень.hidden = true;
   }
 
+  private переключитьСтраницу(страница: СтраницаПриложения): void {
+    this.обновитьНастройку({ страница });
+    const инспектор = страница === 'инспектор';
+    this.разделИнспектор.hidden = !инспектор;
+    this.мульти.показать(!инспектор);
+    this.мульти.применитьНастройки(this.настройки);
+
+    this.навигация.querySelectorAll('.шапка__вкладка').forEach((кнопка) => {
+      const активна =
+        (кнопка as HTMLElement).dataset.страница === страница;
+      кнопка.classList.toggle('шапка__вкладка--активна', активна);
+      кнопка.setAttribute('aria-current', активна ? 'page' : 'false');
+    });
+  }
+
   private обновитьНастройку(часть: Partial<НастройкиПриложения>): void {
     this.настройки = { ...this.настройки, ...часть };
     сохранитьНастройки(this.настройки);
     this.просмотрщик.обновитьНастройки(this.настройки);
+    if (this.настройки.страница === 'мульти') {
+      this.мульти.применитьНастройки(this.настройки);
+    }
   }
 
   private показатьЗагрузку(текст: string): void {
@@ -135,7 +195,10 @@ export class Приложение {
     try {
       const { загрузитьИзФайла } = await import('../services/pdfLoader');
       const загруженный = await загрузитьИзФайла(файл);
-      await this.инициализироватьДокумент(загруженный.документ, загруженный.имяФайла);
+      await this.инициализироватьДокумент(
+        загруженный.документ,
+        загруженный.имяФайла,
+      );
     } catch (ошибка) {
       this.обработатьОшибку(ошибка);
     } finally {
@@ -151,7 +214,10 @@ export class Приложение {
     try {
       const { загрузитьПоUrl } = await import('../services/pdfLoader');
       const загруженный = await загрузитьПоUrl(url);
-      await this.инициализироватьДокумент(загруженный.документ, загруженный.имяФайла);
+      await this.инициализироватьДокумент(
+        загруженный.документ,
+        загруженный.имяФайла,
+      );
     } catch (ошибка) {
       this.обработатьОшибку(ошибка);
     } finally {
@@ -284,6 +350,7 @@ export class Приложение {
       this.скрытьЗагрузку();
     }
   }
+
   private обновитьСтатистику(текстов: number, изображений: number): void {
     this.статистика.hidden = false;
     this.статистика.textContent = `На странице: ${текстов} текстовых блоков, ${изображений} изображений`;

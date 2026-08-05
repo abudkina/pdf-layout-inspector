@@ -88,3 +88,43 @@ export function блокиНаОднойСтроке(
   const центрB = b.y + b.высота / 2;
   return Math.abs(центрA - центрB) <= допускY;
 }
+
+/** Евклидово расстояние между двумя точками (CSS-пиксели) */
+export function расстояние(
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+): number {
+  return Math.hypot(x2 - x1, y2 - y1);
+}
+
+/**
+ * Перевод CSS-пикселей страницы в пункты PDF.
+ * @param масштаб — scale viewport pdf.js
+ */
+export function пикселиВПункты(пиксели: number, масштаб: number): number {
+  const м = масштаб > 0 ? масштаб : 1;
+  return пиксели / м;
+}
+
+/** Пункты PDF → миллиметры (1 pt = 1/72″) */
+export function пунктыВМиллиметры(пункты: number): number {
+  return (пункты * 25.4) / 72;
+}
+
+/** Форматирование результата линейки */
+export function форматИзмерения(
+  пиксели: number,
+  масштаб: number,
+): { пиксели: number; пункты: number; мм: number; текст: string } {
+  const px = округлить(пиксели, 1);
+  const pt = округлить(пикселиВПункты(пиксели, масштаб), 1);
+  const мм = округлить(пунктыВМиллиметры(pt), 2);
+  return {
+    пиксели: px,
+    пункты: pt,
+    мм,
+    текст: `${px} px · ${pt} pt · ${мм} мм`,
+  };
+}

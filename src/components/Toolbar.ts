@@ -10,6 +10,7 @@ export interface СобытияПанели {
   наПереключениеИзображений: (вкл: boolean) => void;
   наМасштаб: (значение: number) => void;
   наСтраницу: (номер: number) => void;
+  наЛинейку: (вкл: boolean) => void;
   наЭкспорт: () => void;
   наСброс: () => void;
 }
@@ -23,6 +24,7 @@ export class ПанельИнструментов {
   private меткаПрозрачности!: HTMLElement;
   private чекТекст!: HTMLInputElement;
   private чекИзображения!: HTMLInputElement;
+  private чекЛинейка!: HTMLInputElement;
   private полеСтраницы!: HTMLInputElement;
   private меткаСтраниц!: HTMLElement;
   private выборМасштаба!: HTMLSelectElement;
@@ -68,6 +70,10 @@ export class ПанельИнструментов {
           <input type="checkbox" id="показать-изображения" />
           <span>Изображения</span>
         </label>
+        <label class="панель__чек">
+          <input type="checkbox" id="режим-линейка" aria-label="Режим линейка" />
+          <span>Линейка</span>
+        </label>
       </div>
 
       <div class="панель__группа">
@@ -105,6 +111,7 @@ export class ПанельИнструментов {
     this.меткаПрозрачности = this.корень.querySelector('#прозрачность-значение')!;
     this.чекТекст = this.корень.querySelector('#показать-текст')!;
     this.чекИзображения = this.корень.querySelector('#показать-изображения')!;
+    this.чекЛинейка = this.корень.querySelector('#режим-линейка')!;
     this.полеСтраницы = this.корень.querySelector('#номер-страницы')!;
     this.меткаСтраниц = this.корень.querySelector('#всего-страниц')!;
     this.выборМасштаба = this.корень.querySelector('#масштаб-страницы')!;
@@ -116,6 +123,7 @@ export class ПанельИнструментов {
     this.меткаПрозрачности.textContent = `${проценты}%`;
     this.чекТекст.checked = настройки.показыватьТекст;
     this.чекИзображения.checked = настройки.показыватьИзображения;
+    this.чекЛинейка.checked = настройки.линейкаВключена;
     this.выборМасштаба.value = String(настройки.масштаб);
     this.полеСтраницы.value = String(настройки.номерСтраницы);
 
@@ -132,6 +140,10 @@ export class ПанельИнструментов {
 
     this.чекИзображения.addEventListener('change', () => {
       this.события.наПереключениеИзображений(this.чекИзображения.checked);
+    });
+
+    this.чекЛинейка.addEventListener('change', () => {
+      this.события.наЛинейку(this.чекЛинейка.checked);
     });
 
     this.выборМасштаба.addEventListener('change', () => {

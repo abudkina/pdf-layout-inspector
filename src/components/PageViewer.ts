@@ -4,15 +4,18 @@ import type {
   ТекстовыйБлок,
 } from '../types';
 import { Лупа } from './Magnifier';
+import { Линейка } from './Ruler';
 
 /**
- * Просмотрщик страницы: canvas + полупрозрачные div-оверлеи.
+ * Просмотрщик страницы: canvas + полупрозрачные div-оверлеи + линейка.
  */
 export class ПросмотрщикСтраницы {
   readonly корень: HTMLElement;
   readonly холст: HTMLCanvasElement;
+  private рамка: HTMLElement;
   private слойРазметки: HTMLElement;
   private лупа: Лупа;
+  private линейка: Линейка;
   private текущаяСтраница: РазметкаСтраницы | null = null;
   private настройки: НастройкиПриложения;
 
@@ -23,8 +26,8 @@ export class ПросмотрщикСтраницы {
     this.корень.setAttribute('role', 'region');
     this.корень.setAttribute('aria-label', 'Просмотр страницы PDF');
 
-    const рамка = document.createElement('div');
-    рамка.className = 'просмотрщик__рамка';
+    this.рамка = document.createElement('div');
+    this.рамка.className = 'просмотрщик__рамка';
 
     this.холст = document.createElement('canvas');
     this.холст.className = 'просмотрщик__холст';
@@ -35,10 +38,14 @@ export class ПросмотрщикСтраницы {
     this.слойРазметки.className = 'просмотрщик__разметка';
     this.слойРазметки.setAttribute('aria-hidden', 'true');
 
-    рамка.append(this.холст, this.слойРазметки);
-    this.корень.appendChild(рамка);
+    this.рамка.append(this.холст, this.слойРазметки);
+    this.корень.appendChild(this.рамка);
 
     this.лупа = new Лупа();
+    this.линейка = new Линейка();
+    this.линейка.прикрепить(this.рамка);
+    this.линейка.установитьМасштаб(настройки.масштаб);
+    this.линейка.установитьВключено(настройки.линейкаВключена);
 
     this.слойРазметки.addEventListener('pointerleave', () => this.лупа.скрыть());
   }
@@ -46,6 +53,9 @@ export class ПросмотрщикСтраницы {
   обновитьНастройки(настройки: НастройкиПриложения): void {
     this.настройки = настройки;
     this.применитьПрозрачность();
+    this.линейка.установитьМасштаб(настройки.масштаб);
+    this.линейка.установитьВключено(настройки.линейкаВключена);
+    this.корень.classList.toggle('просмотрщик--линейка', настройки.линейкаВключена);
     if (this.текущаяСтраница) {
       this.отрисоватьРазметку(this.текущаяСтраница);
     }
@@ -63,12 +73,19 @@ export class ПросмотрщикСтраницы {
   установитьРазмеры(ширина: number, высота: number): void {
     this.слойРазметки.style.width = `${ширина}px`;
     this.слойРазметки.style.height = `${высота}px`;
+    this.рамка.style.width = `${ширина}px`;
+    this.рамка.style.height = `${высота}px`;
   }
 
   отрисоватьРазметку(страница: РазметкаСтраницы): void {
     this.текущаяСтраница = страница;
     this.слойРазметки.replaceChildren();
     this.применитьПрозрачность();
+
+    // В режиме линейки оверлеи не перехватывают указатель
+    this.слойРазметки.style.pointerEvents = this.настройки.линейкаВключена
+      ? 'none'
+      : '';
 
     if (this.настройки.показыватьТекст) {
       for (const блок of страница.тексты) {
@@ -104,6 +121,7 @@ export class ПросмотрщикСтраницы {
     );
 
     эл.addEventListener('pointerenter', (e) => {
+      if (this.настройки.линейкаВключена) return;
       const rect = this.холст.getBoundingClientRect();
       this.лупа.показать(блок, this.холст, e.clientX, e.clientY, {
         left: rect.left,
@@ -112,6 +130,7 @@ export class ПросмотрщикСтраницы {
     });
 
     эл.addEventListener('pointermove', (e) => {
+      if (this.настройки.линейкаВключена) return;
       const rect = this.холст.getBoundingClientRect();
       this.лупа.показать(блок, this.холст, e.clientX, e.clientY, {
         left: rect.left,
@@ -130,9 +149,11 @@ export class ПросмотрщикСтраницы {
     const ctx = this.холст.getContext('2d');
     ctx?.clearRect(0, 0, this.холст.width, this.холст.height);
     this.лупа.скрыть();
+    this.линейка.выключить();
   }
 
   уничтожить(): void {
     this.лупа.уничтожить();
+    this.линейка.открепить();
   }
 }

@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const pdfПуть = path.join(__dirname, '../fixtures/sample.pdf');
+const pngПуть = path.join(__dirname, '../fixtures/sample.png');
 
 test.describe('PDF Layout Inspector', () => {
   test.beforeEach(async ({ page }) => {
@@ -98,5 +99,52 @@ test.describe('PDF Layout Inspector', () => {
       .evaluate((el) => el.clientWidth);
     expect(ширина).toBeLessThanOrEqual(304);
     expect(ширина).toBeGreaterThan(200);
+  });
+
+  test('навигация на Мульти-файл и наложение слоёв', async ({ page }) => {
+    await page.getByRole('button', { name: 'Раздел Мульти-файл' }).click();
+    await expect(page.getByRole('heading', { name: 'Мульти-файл' })).toBeVisible();
+    await expect(page.locator('#мульти-статус')).toBeVisible();
+
+    await page.locator('#мульти-pdf').setInputFiles(pdfПуть);
+    await expect(page.getByText(/PDF .* загружен/i)).toBeVisible({ timeout: 45_000 });
+
+    await page.locator('#мульти-картинка').setInputFiles(pngПуть);
+    await expect(page.getByText(/Картинка .* наложена/i)).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.locator('#мульти-слой')).toBeVisible();
+    await expect(page.getByLabel('Страница PDF в мульти-файле')).toBeVisible();
+  });
+
+  test('режим Линейка на инспекторе', async ({ page }) => {
+    await page.locator('#выбор-pdf').setInputFiles(pdfПуть);
+    await expect(page.locator('.оверлей--текст').first()).toBeVisible({
+      timeout: 45_000,
+    });
+
+    await page.getByLabel('Режим линейка').check();
+    await expect(
+      page.getByRole('region', { name: 'Просмотр страницы PDF' }),
+    ).toHaveClass(/просмотрщик--линейка/);
+    await expect(
+      page.getByRole('region', { name: 'Просмотр страницы PDF' }).locator('.линейка--активна'),
+    ).toBeVisible();
+
+    const линейка = page
+      .getByRole('region', { name: 'Просмотр страницы PDF' })
+      .locator('.линейка--активна');
+    const box = await линейка.boundingBox();
+    expect(box).toBeTruthy();
+    if (!box) return;
+
+    await линейка.hover({ position: { x: 40, y: 40 } });
+    await page.mouse.down();
+    await page.mouse.move(box.x + 140, box.y + 100, { steps: 8 });
+    await page.mouse.up();
+
+    await expect(
+      page.getByRole('region', { name: 'Просмотр страницы PDF' }).locator('.линейка__метка'),
+    ).toContainText(/px/);
   });
 });
