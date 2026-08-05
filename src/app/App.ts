@@ -91,7 +91,7 @@ export class Приложение {
     шапка.innerHTML = `
       <div class="шапка__ряд">
         <div class="шапка__бренд">
-          <img src="/favicon.svg" alt="" width="36" height="36" class="шапка__лого" />
+          <img src="${import.meta.env.BASE_URL}favicon.svg" alt="" width="36" height="36" class="шапка__лого" />
           <div>
             <h1 class="шапка__название">PDF Layout Inspector</h1>
             <p class="шапка__слоган">Проверка вёрстки: текст, изображения, шрифты</p>

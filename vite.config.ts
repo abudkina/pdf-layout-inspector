@@ -4,7 +4,11 @@ import { resolve } from 'path';
 /** Выделенный порт — не пересекается с другими локальными Vite-проектами */
 const PORT = 18765;
 
+/** Для GitHub Pages: /pdf-layout-inspector/ ; локально — / */
+const BASE = process.env.VITE_BASE_PATH || '/';
+
 export default defineConfig({
+  base: BASE,
   root: '.',
   publicDir: 'public',
   resolve: {

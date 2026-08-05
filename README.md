@@ -37,6 +37,12 @@ npm run build
 npm run preview
 ```
 
+## GitHub Pages
+
+Сайт: https://abudkina.github.io/pdf-layout-inspector/
+
+Деплой идёт автоматически из `main` (workflow «Деплой на GitHub Pages»). Локально исходники через Pages не открываются — нужна сборка Vite.
+
 ## Тесты
 
 ```bash
