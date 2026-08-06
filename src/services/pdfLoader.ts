@@ -3,11 +3,10 @@ import type { PDFDocumentProxy } from 'pdfjs-dist';
 import { проверитьСигнатуруPdf, проверитьФайл, проверитьUrl } from '../utils/validation';
 import { логгер } from '../utils/logger';
 
-// Воркер pdf.js из пакета (Vite)
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
-  import.meta.url,
-).toString();
+// Vite подставит корректный URL с учётом base (GitHub Pages)
+import workerSrc from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+
+pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
 
 export interface ЗагруженныйPdf {
   документ: PDFDocumentProxy;
@@ -76,8 +75,7 @@ export async function загрузитьПоUrl(адрес: string): Promise<З�
     throw new Error(сигнатура.ошибка);
   }
 
-  const имя =
-    адрес.split('/').pop()?.split('?')[0] || 'документ.pdf';
+  const имя = адрес.split('/').pop()?.split('?')[0] || 'документ.pdf';
 
   return открытьДокумент(буфер, имя);
 }
@@ -91,7 +89,6 @@ async function открытьДокумент(
       data: new Uint8Array(буфер),
       useSystemFonts: true,
       disableFontFace: false,
-      // Шрифты из /public/standard_fonts (офлайн, без CDN)
       standardFontDataUrl: `${import.meta.env.BASE_URL}standard_fonts/`,
     });
     const документ = await задача.promise;
