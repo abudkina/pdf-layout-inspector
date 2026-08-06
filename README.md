@@ -41,7 +41,20 @@ npm run preview
 
 Сайт: https://abudkina.github.io/pdf-layout-inspector/
 
-Деплой идёт автоматически из `main` (workflow «Деплой на GitHub Pages»). Локально исходники через Pages не открываются — нужна сборка Vite.
+Публикуется ветка `gh-pages` (production-сборка Vite). Исходники из `main` на Pages не открываются.
+
+Обновить сайт после изменений:
+
+```bash
+VITE_BASE_PATH=/pdf-layout-inspector/ npm run build
+npx gh-pages -d dist
+```
+
+На Windows (PowerShell):
+
+```powershell
+$env:VITE_BASE_PATH="/pdf-layout-inspector/"; npm run build; npx gh-pages -d dist
+```
 
 ## Тесты
 
