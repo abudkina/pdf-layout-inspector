@@ -697,11 +697,16 @@ select:disabled {
 /* ─── Индикатор / статистика ─── */
 
 .индикатор {
-  display: flex;
+  display: none;
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem;
+}
+
+.индикатор--активен,
+.индикатор:not([hidden]) {
+  display: flex;
 }
 
 .индикатор__полоса {

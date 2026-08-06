@@ -180,12 +180,14 @@ export class Приложение {
 
   private показатьЗагрузку(текст: string): void {
     this.индикатор.hidden = false;
+    this.индикатор.classList.add('индикатор--активен');
     const t = this.индикатор.querySelector('.индикатор__текст');
     if (t) t.textContent = текст;
   }
 
   private скрытьЗагрузку(): void {
     this.индикатор.hidden = true;
+    this.индикатор.classList.remove('индикатор--активен');
   }
 
   private async открытьФайл(файл: File): Promise<void> {
