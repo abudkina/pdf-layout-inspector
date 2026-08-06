@@ -74,6 +74,11 @@ select:disabled {
   outline-offset: 2px;
 }
 
+/* display:flex и др. иначе перебивают нативный [hidden] */
+[hidden] {
+  display: none !important;
+}
+
 /* ─── Приложение ─── */
 
 .приложение {
